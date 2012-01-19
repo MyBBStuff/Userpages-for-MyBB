@@ -8,7 +8,3 @@ INSTALLATION
 2.	Go to ACP -> Configuration -> Plugins -> Install & Activate "Userpages for MyBB"
 3.	Configure your settings via ACP -> Configuration -> Userpage Settings
 4.	Configure your usergroup permissions from ACP -> Users & Groups -> Usergroups. Select the usergroup that you wish to change permissions for, then click on the Users and Permissions tab and scroll to the Userpage Permissions section.
-
-LICENSE
-
-This plugin was created by euantor under a Creative Commons license - the details of which can be found here: http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode
