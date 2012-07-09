@@ -560,8 +560,8 @@ function userpages_usercp()
 		
 		$smilieinserter = build_clickable_smilies();
 		$codebuttons = build_mycode_inserter("userpage_content");
-		
-		$currentuserpage = htmlspecialchars($db->fetch_field($db->simple_select("users", "userpage", "uid = ".$mybb->user['uid']), "userpage"));
+
+		$currentuserpage = htmlspecialchars($mybb-user['userpage']);
 		eval("\$page = \"".$templates->get('userpages_usercp_main')."\";");
 		output_page($page);
 		die();
