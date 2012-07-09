@@ -24,7 +24,10 @@ if(!defined("IN_MYBB"))
 function userpages_info() {
     global $lang;
     
-    $lang->load("userpages");
+	if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+	{
+		$lang->load("userpages");
+	}
     
     return array(
         "name" => $lang->userpages_title,
@@ -45,7 +48,7 @@ function userpages_info() {
 *	Plugin Install
 */
 function userpages_install() {
-    global $mybb, $db, $cache;
+    global /*$mybb, */$db, $cache;
     
     $db->query("ALTER TABLE `".TABLE_PREFIX."users` ADD `userpage` TEXT NOT NULL");
     $db->query("ALTER TABLE `".TABLE_PREFIX."usergroups` ADD `canuserpage` INT(1) NOT NULL DEFAULT '0', ADD `canuserpageedit` INT(1) NOT NULL DEFAULT '0', ADD `canuserpagemod` INT(1) NOT NULL DEFAULT '0';");
@@ -76,7 +79,10 @@ function userpages_is_installed() {
 function userpages_activate() {
     global $db, $mybb, $lang;
     
-    $lang->load("userpages");
+	if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+	{
+		$lang->load("userpages");
+	}
 	
     $settings_group = array(
         "gid" => "",
@@ -369,7 +375,8 @@ function userpages_activate() {
 		$db->insert_query("templates", $row);
 	}
 	
-	include  MYBB_ROOT."/inc/adminfunctions_templates.php";
+	#include  MYBB_ROOT."/inc/adminfunctions_templates.php";
+	include_once  MYBB_ROOT."/inc/adminfunctions_templates.php";
 	find_replace_templatesets("member_profile", "#".preg_quote('<span class="largetext"><strong>{$formattedname}</strong></span><br />')."#i", '<span class="largetext"><strong>{$formattedname}</strong></span><br />'."\n".'{$userpagelink}');
 }
 /*
@@ -389,7 +396,8 @@ function userpages_deactivate() {
     $db->delete_query("templates", "title LIKE 'userpages_%'");
     rebuild_settings();
     
-    include  MYBB_ROOT."/inc/adminfunctions_templates.php";
+    #include  MYBB_ROOT."/inc/adminfunctions_templates.php";
+    include_once  MYBB_ROOT."/inc/adminfunctions_templates.php";
     find_replace_templatesets("member_profile", "#".preg_quote("\n".'{$userpagelink}')."#i", '');
 }
 /*
@@ -417,12 +425,19 @@ function userpages_uninstall() {
 $plugins->add_hook("admin_formcontainer_end", "userpages_edit_group");
 function userpages_edit_group()
 {
-	global $run_module, $form_container, $lang, $form, $mybb;
-	
-	$lang->load("userpages");
+	global $run_module, $form_container, $lang, $form;
+
+	/*$lang->load("userpages");*/
 
 	if($run_module == 'user' && !empty($form_container->_title) && !empty($lang->users_permissions) && $form_container->_title == $lang->users_permissions)
 	{
+		global $mybb;
+		
+		if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+		{
+			$lang->load("userpages");
+		}
+
 		$userpages_options = array();
 		$userpages_options[] = $form->generate_check_box('canuserpage', 1, $lang->userpages_perm_base, array('checked' => $mybb->input['canuserpage']));
 		$userpages_options[] = $form->generate_check_box('canuserpageedit', 1, $lang->userpages_perm_edit, array('checked' => $mybb->input['canuserpageedit']));	
@@ -458,8 +473,37 @@ function userpages_edit_group_do()
 $plugins->add_hook("global_start", "userpages_templatecache");
 function userpages_templatecache() {
 	global $templatelist;
-	
-	$templatelist .= ",userpages_content,userpages_modcp_main,userpages_modcp_modify,userpages_modcp_nav,userpages_modcp_singleuser,userpages_usercp_main,userpages_usercp_nav,smilieinsert,codebuttons,";
+
+	if(!isset($templatelist))
+	{
+		return;
+	}
+
+	$action = $GLOBALS['mybb']->input['action'];
+	if(THIS_SCRIPT == 'member.php')
+	{
+		$templatelist .= ', userpages_content';
+	}
+	if(THIS_SCRIPT == 'usercp.php')
+	{
+		$templatelist .= ', userpages_usercp_nav';
+		if($action == 'edituserpage')
+		{
+			$templatelist .= ', userpages_usercp_main, smilieinsert, codebuttons';
+		}
+	}
+	if(THIS_SCRIPT == 'modcp.php')
+	{
+		$templatelist .= ', userpages_modcp_nav';
+		if($action == 'userpages')
+		{
+			$templatelist .= ', userpages_modcp_singleuser, userpages_modcp_main';
+		}
+		elseif($action == 'userpages_edit')
+		{
+			$templatelist .= ', userpages_modcp_modify, smilieinsert, codebuttons';
+		}
+	}
 }
 /*
 *	End cached templates for userpages
@@ -472,13 +516,17 @@ function userpages_templatecache() {
 $plugins->add_hook("usercp_menu", "userpages_usercpmenu", 40);
 function userpages_usercpmenu() 
 {
-	global $db, $mybb, $templates, $theme, $usercpmenu, $lang, $collapsed, $collapsedimg, $lang, $cache;
+	global /*$db, */$mybb, $templates, $theme, $usercpmenu, $lang, $collapsed, $collapsedimg/*, $lang, $cache*/;
 	
-	$usergroups_cache = $cache->read("usergroups");
+	/*$usergroups_cache = $cache->read("usergroups");*/
 	
-	$lang->load("userpages");
+	if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+	{
+		$lang->load("userpages");
+	}
 	
-	if ($usergroups_cache[$mybb->user['usergroup']]['canuserpage'] && $usergroups_cache[$mybb->user['usergroup']]['canuserpageedit']) {
+	
+	if (/*$usergroups_cache[$mybb->user['usergroup']]['canuserpage'] && $usergroups_cache[$mybb->user['usergroup']]['canuserpageedit']*/$mybb->usergroup['canuserpage'] && $mybb->usergroup['canuserpageedit']) {
 		eval("\$usercpmenu .= \"".$templates->get("userpages_usercp_nav")."\";");
 	}
 }
@@ -493,17 +541,20 @@ function userpages_usercpmenu()
 $plugins->add_hook("usercp_start", "userpages_usercp");
 function userpages_usercp() 
 {
-	global $mybb, $db, $lang, $cache, $page, $templates, $theme, $headerinclude, $header, $footer, $usercpnav, $smilieinserter, $codebuttons, $currentuserpage;
+	global $mybb, $db, $lang, /*$cache, */$page, $templates, $theme, $headerinclude, $header, $footer, $usercpnav, $smilieinserter, $codebuttons, $currentuserpage;
 
-	$lang->load('userpages');
+	if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+	{
+		$lang->load("userpages");
+	}
 	
-	$usergroups_cache = $cache->read("usergroups");
+	/*$usergroups_cache = $cache->read("usergroups");*/
 	
 	if ($mybb->input['action'] == "edituserpage") {
 		add_breadcrumb($lang->nav_usercp, "usercp.php");
 		add_breadcrumb($lang->changeuserpage, "usercp.php?action=edituserpage");
 	
-		if (!$usergroups_cache[$mybb->user['usergroup']]['canuserpage'] || !$usergroups_cache[$mybb->user['usergroup']]['canuserpageedit']) {
+		if (/*!$usergroups_cache[$mybb->user['usergroup']]['canuserpage'] || !$usergroups_cache[$mybb->user['usergroup']]['canuserpageedit']*/!($mybb->usergroup['canuserpage'] && $mybb->usergroup['canuserpageedit'])) {
 			error_no_permission();
 		}
 		
@@ -517,7 +568,7 @@ function userpages_usercp()
 	}
 	elseif ($mybb->input['action'] == "edituserpage_do" && $mybb->request_method == "post") {
 	
-		if (!$usergroups_cache[$mybb->user['usergroup']]['canuserpage'] || !$usergroups_cache[$mybb->user['usergroup']]['canuserpageedit']) {
+		if (/*!$usergroups_cache[$mybb->user['usergroup']]['canuserpage'] || !$usergroups_cache[$mybb->user['usergroup']]['canuserpageedit']*/!($mybb->usergroup['canuserpage'] && $mybb->usergroup['canuserpageedit'])) {
 			error_no_permission();
 		}
 		
@@ -547,11 +598,14 @@ function userpages_usercp()
 $plugins->add_hook("modcp_start", "userpages_modcp");
 function userpages_modcp() 
 {
-	global $mybb, $db, $cache, $lang, $templates, $theme, $headerinclude, $header, $footer, $modcp_nav, $altbg, $userpages_users, $multipage, $smilieinserter, $codebuttons;
+	global $mybb, $db, /*$cache, */$lang, $templates, $theme, $headerinclude, $header, $footer, $modcp_nav, $altbg, $userpages_users, $multipage, $smilieinserter, $codebuttons;
 	
-	$lang->load("userpages");
+	if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+	{
+		$lang->load("userpages");
+	}
 	
-	$usergroups_cache = $cache->read("usergroups");
+	/*$usergroups_cache = $cache->read("usergroups");*/
 	
 	/*
 	*	Adding a link to the ModCP Menu.
@@ -562,7 +616,7 @@ function userpages_modcp()
 	$modcp_nav = str_replace("</table>", $newentry."</table>", $modcp_nav);
 	
 	if ($mybb->input['action'] == "userpages") {
-		if (!$usergroups_cache[$mybb->user['usergroup']]['canuserpagemod']) {
+		if (/*!$usergroups_cache[$mybb->user['usergroup']]['canuserpagemod']*/!$mybb->usergroup['canuserpagemod']) {
 			error_no_permission();
 		}
 		
@@ -612,7 +666,7 @@ function userpages_modcp()
 		die();
 	}
 	elseif ($mybb->input['action'] == "userpages_edit") {
-		if (!$usergroups_cache[$mybb->user['usergroup']]['canuserpagemod']) {
+		if (/*!$usergroups_cache[$mybb->user['usergroup']]['canuserpagemod']*/!$mybb->usergroup['canuserpagemod']) {
 			error_no_permission();
 		}
 		
@@ -636,7 +690,7 @@ function userpages_modcp()
 		die();
 	}
 	elseif ($mybb->input['action'] == "userpages_edit_do" && $mybb->request_method == "post") {
-		if (!$usergroups_cache[$mybb->user['usergroup']]['canuserpagemod']) {
+		if (/*!$usergroups_cache[$mybb->user['usergroup']]['canuserpagemod']*/!$mybb->usergroup['canuserpagemod']) {
 			error_no_permission();
 		}
 		
@@ -665,11 +719,14 @@ function userpages_modcp()
 $plugins->add_hook("member_profile_start", "userpages_main");
 function userpages_main() 
 {
-	global $mybb, $db, $memprofile, $lang, $cache, $userpage_parser, $templates, $theme, $headerinclude, $header, $footer, $page, $parser, $userpagelink;
+	global $mybb, $db, $memprofile, $lang/*, $cache*/, $userpage_parser, $templates, $theme, $headerinclude, $header, $footer, $page, $parser, $userpagelink;
 	
-	$lang->load('userpages');
+	if(!(isset($lang->viewinguserpage) && isset($lang->usercp_userpages)))
+	{
+		$lang->load("userpages");
+	}
 	
-	$usergroups_cache = $cache->read("usergroups");
+	/*$usergroups_cache = $cache->read("usergroups");*/
 	
 	$memprofile = $db->fetch_array($db->simple_select("users", "userpage, username, uid", "uid = ".intval($mybb->input['uid'])), "userpage");
 	
@@ -685,7 +742,7 @@ function userpages_main()
 	}
 	
 	if ($mybb->input['area'] == "userpage") {
-		if (!$usergroups_cache[$mybb->user['usergroup']]['canuserpage']) {
+		if (/*!$usergroups_cache[$mybb->user['usergroup']]['canuserpage']*/!$mybb->usergroup['canuserpage']) {
 			error_no_permission();
 		
 		}
